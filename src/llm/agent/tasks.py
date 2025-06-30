@@ -101,24 +101,35 @@ class QueryTaskBuilder:
         Create a personalized, engaging markdown report for user '{user_email}' based on the cluster analysis 
         and article recommendations from the previous tasks.
 
+        IMPORTANT CONSTRAINTS:
+        - YOU MUST include EXACTLY 6 articles in the report (2 from each cluster)
+        - Each timeline entry MUST be on a separate line
+        - If fewer than 6 articles are available, search for additional related articles to reach exactly 6
+
         Your task is to:
         1. Extract the analysis results and article recommendations from the previous tasks
-        2. Create an engaging introduction that explains why these articles were selected
-        3. Organize the content into a well-structured markdown report
-        4. For each recommended article, provide:
+        2. Verify you have exactly 6 articles total (2 per cluster) - if not, supplement with related articles
+        3. Create an engaging introduction that explains why these articles were selected
+        4. Organize the content into a well-structured markdown report
+        5. For each recommended article, provide:
            - Article title (as clickable link using the URL)
-           - Source publication
+           - Source publication and published date
            - A compelling 2-3 sentence summary based on the article body
            - Why this article fits the user's interests (reference the cluster it belongs to)
+        6. Enhance each article by searching the web for similar/related stories:
+           - Use web search to find 2-3 related articles on the same topic
+           - Scrape the related articles to get their publication dates
+           - Create a chronological timeline showing the story development
+           - Format timeline entries with title links, source, and date
 
         The report should:
         - Start with a personalized greeting and brief explanation of the recommendation system
-        - List articles one by one
+        - List articles one by one with enhanced timelines
         - Use proper markdown formatting (headers, links, bullet points, etc.)
         - Have an engaging, conversational tone
         - Include a conclusion encouraging the user to explore these articles
 
-        Structure the report as:
+        MANDATORY FORMAT - Structure the report EXACTLY as follows:
         # Personalized News Recommendations for [User]
         
         ## Introduction
@@ -126,26 +137,83 @@ class QueryTaskBuilder:
         
         ## Recommended Articles
         
-        ### [Article 1 Title]
-        url | source
+        ### [Article 1 Title](article_url)
+        article_url | source | published_date
         Article summary, main points (one paragraph)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
         
-        
-        ### [Article 2 Title]
-        url | source
+        ### [Article 2 Title](article_url)
+        article_url | source | published_date
         Article summary, main points (one paragraph)
-        
-        (same for other articles)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
+
+        ### [Article 3 Title](article_url)
+        article_url | source | published_date
+        Article summary, main points (one paragraph)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
+
+        ### [Article 4 Title](article_url)
+        article_url | source | published_date
+        Article summary, main points (one paragraph)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
+
+        ### [Article 5 Title](article_url)
+        article_url | source | published_date
+        Article summary, main points (one paragraph)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
+
+        ### [Article 6 Title](article_url)
+        article_url | source | published_date
+        Article summary, main points (one paragraph)
+
+        <small>**Timeline:** (Related stories in chronological order)</small>
+        <small>1. [Connected article 1 Title](link) | Source | Date</small>
+        <small>2. [Connected article 2 Title](link) | Source | Date</small>
+        <small>3. [Current article title](original_url) | Source | Date</small>
         
         ## Conclusion
         [Encouraging closing remarks]
         
-        Make it personal, engaging, and valuable for the user.
+        TIMELINE FORMATTING RULES:
+        - Each timeline entry MUST be on its own separate line
+        - Each line starts with <small> and ends with </small>
+        - Use numbered list format (1., 2., 3.)
+        - Order timeline entries chronologically (oldest to newest)
+        - Include the original recommended article as the final timeline entry
+        - Extract publication dates from scraped content accurately
+        
+        ARTICLE COUNT VALIDATION:
+        - Count all articles before generating the report
+        - If you have fewer than 6 articles, search for additional relevant articles using web search
+        - Ensure the final report contains exactly 6 article sections
+        - Each article must have a complete timeline with 2-3 related stories
+        
+        Make it personal, engaging, and valuable for the user with comprehensive context through timelines.
         """
         
         return Task(
             description=description,
             agent=agent,
-            expected_output="A complete markdown report with personalized article recommendations",
+            expected_output="A complete markdown report with exactly 6 personalized article recommendations, each with chronological timelines where every timeline entry is on a separate line",
             output_pydantic=PersonalizedReportOutput
         )

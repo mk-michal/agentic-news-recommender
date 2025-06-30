@@ -1,5 +1,6 @@
 from crewai import Agent
 from typing import List, Any
+from crewai_tools import SerperDevTool, ScrapeWebsiteTool
 
 
 class DatabaseAgent:
@@ -56,22 +57,27 @@ class ReportWriterAgent:
     """Factory class for creating markdown report writer agents."""
     
     AGENT_ROLE = "Content Report Writer"
-    AGENT_GOAL = ("Create engaging, personalized markdown reports summarizing article recommendations "
-                  "based on user analysis and preferences")
+    AGENT_GOAL = ("Create engaging, personalized markdown reports with enhanced timelines by searching "
+                  "for related articles and creating chronological context")
     AGENT_BACKSTORY = """I am a skilled content writer and report generator with expertise in creating 
     engaging, personalized content. I specialize in transforming technical analysis and article recommendations 
     into readable, well-structured markdown reports that highlight the most relevant and interesting content 
-    for each user. I excel at summarizing complex information and presenting it in an accessible, 
-    engaging format that captures the user's attention and provides clear value."""
+    for each user. I excel at researching related stories, creating timelines, and presenting complex 
+    information in an accessible, engaging format that provides comprehensive context and value."""
     
     @staticmethod
     def create_agent() -> Agent:
-        """Create a report writer agent (no tools needed - uses LLM capabilities)."""
+        """Create a report writer agent with web search and scraping tools."""
+        tools = [
+            SerperDevTool(),  # For web searching
+            ScrapeWebsiteTool()  # For scraping article content and dates
+        ]
+        
         return Agent(
             role=ReportWriterAgent.AGENT_ROLE,
             goal=ReportWriterAgent.AGENT_GOAL,
             backstory=ReportWriterAgent.AGENT_BACKSTORY,
-            tools=[],  # No tools needed - pure LLM content generation
+            tools=tools,
             verbose=True,
             allow_delegation=False
         )

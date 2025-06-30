@@ -74,7 +74,7 @@ class DatabaseAnalysisExecutor:
             memory=True
         )
         result = crew.kickoff()
-        result = PersonalizedReportOutput.parse_obj(json.loads(result.raw)['markdown_report'])
+        result = PersonalizedReportOutput.parse_obj(json.loads(result.raw))
         
         # Save the markdown report to file if it's a PersonalizedReportOutput
         if hasattr(result, 'markdown_report'):
