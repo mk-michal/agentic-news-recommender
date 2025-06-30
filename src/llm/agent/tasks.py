@@ -1,5 +1,5 @@
 from crewai import Task, Agent
-from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput
+from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput, PersonalizedReportOutput
 import sys
 from pathlib import Path
 
@@ -93,4 +93,59 @@ class QueryTaskBuilder:
             agent=agent,
             expected_output="Complete article recommendations organized by cluster with full metadata",
             output_pydantic=RecommendationOutput
+        )
+    
+    def create_report_generation_task(self, user_email: str, agent: Agent) -> Task:
+        """Create a markdown report generation task."""
+        description = f"""
+        Create a personalized, engaging markdown report for user '{user_email}' based on the cluster analysis 
+        and article recommendations from the previous tasks.
+
+        Your task is to:
+        1. Extract the analysis results and article recommendations from the previous tasks
+        2. Create an engaging introduction that explains why these articles were selected
+        3. Organize the content into a well-structured markdown report
+        4. For each recommended article, provide:
+           - Article title (as clickable link using the URL)
+           - Source publication
+           - A compelling 2-3 sentence summary based on the article body
+           - Why this article fits the user's interests (reference the cluster it belongs to)
+
+        The report should:
+        - Start with a personalized greeting and brief explanation of the recommendation system
+        - List articles one by one
+        - Use proper markdown formatting (headers, links, bullet points, etc.)
+        - Have an engaging, conversational tone
+        - Include a conclusion encouraging the user to explore these articles
+
+        Structure the report as:
+        # Personalized News Recommendations for [User]
+        
+        ## Introduction
+        [Engaging intro about the recommendation system and user's interests]
+        
+        ## Recommended Articles
+        
+        ### [Article 1 Title]
+        url | source
+        Article summary, main points (one paragraph)
+        
+        
+        ### [Article 2 Title]
+        url | source
+        Article summary, main points (one paragraph)
+        
+        (same for other articles)
+        
+        ## Conclusion
+        [Encouraging closing remarks]
+        
+        Make it personal, engaging, and valuable for the user.
+        """
+        
+        return Task(
+            description=description,
+            agent=agent,
+            expected_output="A complete markdown report with personalized article recommendations",
+            output_pydantic=PersonalizedReportOutput
         )

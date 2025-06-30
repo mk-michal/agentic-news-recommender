@@ -36,3 +36,14 @@ class RecommendationOutput(BaseModel):
             "cluster_2_recommendations": self.cluster_2_recommendations.dict(),
             "cluster_3_recommendations": self.cluster_3_recommendations.dict()
         }
+
+class PersonalizedReportOutput(BaseModel):
+    """Structured output model for personalized markdown report."""
+    markdown_report: str
+    report_title: str
+    user_email: str
+    
+    def save_to_file(self, file_path: str) -> None:
+        """Save the markdown report to a file."""
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(self.markdown_report)

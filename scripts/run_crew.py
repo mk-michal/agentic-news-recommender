@@ -15,8 +15,8 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from crewai import Crew
-from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput
-from src.llm.agent.agents import DatabaseAgent, RecommenderAgent
+from src.llm.agent.agents import DatabaseAgent, RecommenderAgent, ReportWriterAgent
+from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput, PersonalizedReportOutput
 from src.llm.agent.tasks import QueryTaskBuilder
 from src.llm.agent.tools import DatabaseTools, RecommenderTools
 from src.llm.agent.mcp_config import MCPServerConfig
@@ -32,7 +32,7 @@ class DatabaseAnalysisExecutor:
         self.task_builder = QueryTaskBuilder()
     
     def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
-        """Execute the complete analysis pipeline with one crew and two agents."""
+        """Execute the complete analysis pipeline with three agents."""
         
         # Get tools for both agents
         pg_tools = self.db_tools.get_tools_with_context().tools
@@ -42,66 +42,57 @@ class DatabaseAnalysisExecutor:
         # Create agents
         db_agent = DatabaseAgent.create_agent(list(pg_tools))
         recommender_agent = RecommenderAgent.create_agent(recommender_tools)
+        report_agent = ReportWriterAgent.create_agent()
         
         # Create tasks
         analysis_task = self.task_builder.create_analysis_task(user_email, db_agent)
-        
-        # Create recommendation task that will receive input from analysis task
         recommendation_task = self.task_builder.create_recommendation_task_with_context(recommender_agent)
+        report_task = self.task_builder.create_report_generation_task(user_email, report_agent)
         
-        # Set up task dependencies - recommendation task depends on analysis task
+        # Set up task dependencies
         recommendation_task.context = [analysis_task]
+        report_task.context = [analysis_task, recommendation_task]
         
-        # Execute the crew with both agents and tasks
-        result = self._run_single_crew(db_agent, recommender_agent, analysis_task, recommendation_task, user_email)
+        # Execute the crew with all three agents and tasks
+        result = self._run_single_crew(
+            [db_agent, recommender_agent, report_agent], 
+            [analysis_task, recommendation_task, report_task], 
+            user_email
+        )
         return result
     
-    def _run_single_crew(self, db_agent, recommender_agent, analysis_task, recommendation_task, user_email) -> Dict[str, Any]:
-        """Run a single crew with both agents and tasks."""
+    def _run_single_crew(self, agents, tasks, user_email) -> Dict[str, Any]:
+        """Run a single crew with all agents and tasks."""
         
         print("=== Starting Complete Analysis Pipeline ===")
         
-        # Create single crew with both agents and tasks
+        # Create single crew with all agents and tasks
         crew = Crew(
-            agents=[db_agent, recommender_agent],
-            tasks=[analysis_task, recommendation_task],
+            agents=agents,
+            tasks=tasks,
             verbose=True,
             memory=True
         )
-        cluster_result = crew.kickoff()
+        result = crew.kickoff()
+        result = PersonalizedReportOutput.parse_obj(json.loads(result.raw)['markdown_report'])
         
-        # Process cluster analysis result
-        if isinstance(cluster_result, ClusterAnalysisOutput):
-            cluster_analysis = cluster_result
-        else:
-            cluster_analysis = ClusterAnalysisOutput.parse_obj(json.loads(cluster_result.raw))
+        # Save the markdown report to file if it's a PersonalizedReportOutput
+        if hasattr(result, 'markdown_report'):
+            # Create reports directory if it doesn't exist
+            from pathlib import Path
+            reports_dir = Path(__file__).parent.parent / "reports"
+            reports_dir.mkdir(exist_ok=True)
+            
+            # Generate filename with timestamp
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"news_recommendations_{user_email.replace('@', '_at_')}_{timestamp}.md"
+            file_path = reports_dir / filename
+            
+            result.save_to_file(str(file_path))
+            print(f"Report saved to: {file_path}")
         
-        print("✓ Generated 3 user interest clusters")
-        
-        # Now create and run the recommendation task
-        print("\n=== Step 2: Finding Article Recommendations ===")
-        recommendation_task = self.task_builder.create_recommendation_task(cluster_analysis, recommender_agent)
-        
-        recommendation_crew = Crew(
-            agents=[recommender_agent],
-            tasks=[recommendation_task],
-            verbose=True,
-            memory=True
-        )
-        recommendation_result = recommendation_crew.kickoff()
-        
-        print("✓ Generated article recommendations")
-                # Process cluster analysis result
-        if isinstance(cluster_result, RecommendationOutput):
-            recommendation_result = cluster_result
-        else:
-            recommendation_result = RecommendationOutput.parse_obj(json.loads(recommendation_result.raw))
-        
-        return {
-            "user_email": user_email,
-            "cluster_analysis": cluster_analysis,
-            "recommendations": recommendation_result.dict() if hasattr(recommendation_result, 'dict') else recommendation_result
-        }
+        return result
 
 
 def main():
@@ -112,46 +103,9 @@ def main():
     
     # Execute full pipeline
     full_result = executor.execute_full_analysis(user_email)
+    print("\n=== Analysis Complete ===")
+    if hasattr(full_result, 'report_title'):
+        print(f"Generated report: {full_result.report_title}")
     
-    print("\n" + "="*60)
-    print("=== COMPLETE ANALYSIS AND RECOMMENDATIONS ===")
-    print("="*60)
-    
-    # Display cluster analysis
-    print("\n--- USER READING CLUSTERS ---")
-    cluster_analysis = full_result["cluster_analysis"]
-    
-    if isinstance(cluster_analysis, dict):
-        print(f"Cluster 1: {cluster_analysis.get('cluster_1', 'N/A')}")
-        print(f"\nCluster 2: {cluster_analysis.get('cluster_2', 'N/A')}")
-        print(f"\nCluster 3: {cluster_analysis.get('cluster_3', 'N/A')}")
-    else:
-        print(f"Cluster Analysis: {cluster_analysis}")
-    
-    # Display final recommendations
-    print("\n--- FINAL RECOMMENDATIONS ---")
-    recommendations = full_result["recommendations"]
-    
-    if isinstance(recommendations, dict):
-        for i, cluster_key in enumerate(["cluster_1_recommendations", "cluster_2_recommendations", "cluster_3_recommendations"], 1):
-            if cluster_key in recommendations:
-                cluster_recs = recommendations[cluster_key]
-                print(f"\n=== Cluster {i} ===")
-                print(f"Theme: {cluster_recs.get('cluster_description', 'N/A')}")
-                
-                articles = cluster_recs.get('articles', [])
-                for j, article in enumerate(articles, 1):
-                    print(f"\nArticle {j}:")
-                    print(f"  ID: {article.get('article_id', 'N/A')}")
-                    print(f"  Title: {article.get('title', 'N/A')}")
-                    print(f"  Source: {article.get('source', 'N/A')}")
-                    print(f"  URL: {article.get('url', 'N/A')}")
-                    body = article.get('body', '')
-                    if body:
-                        print(f"  Body Preview: {body[:200]}...")
-    else:
-        print(f"Recommendations: {recommendations}")
-
-
 if __name__ == "__main__":
     main()

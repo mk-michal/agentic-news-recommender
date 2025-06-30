@@ -50,3 +50,28 @@ class RecommenderAgent:
             verbose=True,
             allow_delegation=False
         )
+
+
+class ReportWriterAgent:
+    """Factory class for creating markdown report writer agents."""
+    
+    AGENT_ROLE = "Content Report Writer"
+    AGENT_GOAL = ("Create engaging, personalized markdown reports summarizing article recommendations "
+                  "based on user analysis and preferences")
+    AGENT_BACKSTORY = """I am a skilled content writer and report generator with expertise in creating 
+    engaging, personalized content. I specialize in transforming technical analysis and article recommendations 
+    into readable, well-structured markdown reports that highlight the most relevant and interesting content 
+    for each user. I excel at summarizing complex information and presenting it in an accessible, 
+    engaging format that captures the user's attention and provides clear value."""
+    
+    @staticmethod
+    def create_agent() -> Agent:
+        """Create a report writer agent (no tools needed - uses LLM capabilities)."""
+        return Agent(
+            role=ReportWriterAgent.AGENT_ROLE,
+            goal=ReportWriterAgent.AGENT_GOAL,
+            backstory=ReportWriterAgent.AGENT_BACKSTORY,
+            tools=[],  # No tools needed - pure LLM content generation
+            verbose=True,
+            allow_delegation=False
+        )
