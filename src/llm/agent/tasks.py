@@ -52,25 +52,23 @@ class QueryTaskBuilder:
             expected_output="A structured analysis with 3 cluster descriptions based on user reading patterns",
             output_pydantic=ClusterAnalysisOutput
         )
+
     
-    def create_recommendation_task(self, cluster_analysis: ClusterAnalysisOutput, agent: Agent) -> Task:
-        """Create a comprehensive recommendation task that combines vector search and article retrieval."""
+    def create_recommendation_task_with_context(self, agent: Agent) -> Task:
+        """Create a recommendation task that uses context from the analysis task."""
         description = f"""
-        Based on the following user interest clusters, recommend relevant articles by combining 
-        vector similarity search with database retrieval:
+        Based on the cluster analysis results from the previous task, recommend relevant articles by combining 
+        vector similarity search with database retrieval.
 
         POSTGRESQL DATABASE SCHEMA:
         {self.schema_info}
 
-        Cluster 1: {cluster_analysis.cluster_1}
-        Cluster 2: {cluster_analysis.cluster_2}  
-        Cluster 3: {cluster_analysis.cluster_3}
-
         Your task is to:
-        1. Use the vector_similarity_search tool to find 2 most similar articles for each cluster description
-        2. Extract the article IDs from the vector search results
-        3. Use the PostgreSQL tools to retrieve complete article information (title, url, source_title, body) for these article IDs
-        4. Organize the recommendations by cluster with full article details
+        1. Extract the 3 cluster descriptions from the previous task's output
+        2. Use the vector_similarity_search tool to find 2 most similar articles for each cluster description
+        3. Extract the article IDs from the vector search results
+        4. Use the PostgreSQL tools to retrieve complete article information (title, url, source_title, body) for these article IDs
+        5. Organize the recommendations by cluster with full article details
         
         Process for each cluster:
         - Search for articles similar to the cluster description using vector search
