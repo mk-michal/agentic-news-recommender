@@ -152,6 +152,8 @@ class NewsAPIConnector:
         articles_count: int = 10,
         articles_page: int = 1,
         articles_sort_by: str = "date",
+        dateStart: Optional[str] = None,
+        dateEnd: Optional[str] = None,
         articles_sort_by_asc: bool = False,
         source_location_uri: Optional[List[str]] = None,
         ignore_source_group_uri: Optional[str] = None,
@@ -187,28 +189,15 @@ class NewsAPIConnector:
         
         if not isinstance(articles_count, int) or articles_count < 1 or articles_count > 100:
             raise ValueError("articles_count must be an integer between 1 and 100")
-        
-        if not isinstance(articles_page, int) or articles_page < 1:
-            raise ValueError("articles_page must be a positive integer")
-        
-        valid_sort_options = [
-            "date", "rel", "sourceImportanceRank", "sourceAlexaGlobalRank", 
-            "sourceAlexaCountryRank", "socialScore", "facebook", "googlePlus", 
-            "linkedin", "pinterest", "reddit", "stumbleUpon", "twitter"
-        ]
-        if articles_sort_by not in valid_sort_options:
-            raise ValueError(f"articles_sort_by must be one of: {', '.join(valid_sort_options)}")
-        
+    
         # Set default values
         if data_type is None:
             data_type = ["news", "pr"]
         
         if source_location_uri is None:
             source_location_uri = [
-                "https://en.wikipedia.org/wiki/Czech_Republic",
-                # "http://en.wikipedia.org/wiki/United_States",
-                # "http://en.wikipedia.org/wiki/Canada",
-                # "http://en.wikipedia.org/wiki/United_Kingdom"
+                "http://en.wikipedia.org/wiki/United_States",
+                "http://en.wikipedia.org/wiki/United_Kingdom"
             ]
         
         # Build request payload
@@ -222,63 +211,19 @@ class NewsAPIConnector:
             "articlesSortByAsc": articles_sort_by_asc,
             "dataType": data_type,
             "forceMaxDataTimeWindow": force_max_data_time_window,
-            "resultType": result_type
+            "resultType": result_type,
+            "dateStart": dateStart,
+            "dateEnd": dateEnd
         }
         
         # Add optional parameters
         if ignore_source_group_uri:
             payload["ignoreSourceGroupUri"] = ignore_source_group_uri
         
-        try:
-            return self._make_request('article/getArticles', payload)
         
-        except Exception as e:
-            logger.error(f"Failed to search articles for keyword '{keyword}': {str(e)}")
-            raise
-    
-    def get_article_details(self, article_uri: str) -> Dict[str, Any]:
-        """
-        Get detailed information about a specific article
+        return self._make_request('article/getArticles', payload)
         
-        Args:
-            article_uri: Unique article URI
-            
-        Returns:
-            Dictionary containing article details
-        """
-        if not article_uri:
-            raise ValueError("Article URI cannot be empty")
         
-        payload = {
-            "action": "getArticle",
-            "articleUri": article_uri,
-            "resultType": "info"
-        }
-        
-        try:
-            return self._make_request('article/getArticle', payload)
-        
-        except Exception as e:
-            logger.error(f"Failed to get article details for URI '{article_uri}': {str(e)}")
-            raise
-    
-    def search_articles_with_custom_payload(self, custom_payload: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Search for articles using a custom payload
-        
-        Args:
-            custom_payload: Custom request payload (apiKey will be added automatically)
-            
-        Returns:
-            Dictionary containing search results
-        """
-        try:
-            return self._make_request('article/getArticles', custom_payload)
-        
-        except Exception as e:
-            logger.error(f"Failed to search articles with custom payload: {str(e)}")
-            raise
-    
     def close(self):
         """Close the session"""
         self.session.close()
@@ -288,53 +233,3 @@ class NewsAPIConnector:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-# Example usage
-if __name__ == "__main__":
-    # Initialize connector (replace with your actual API key)
-    api_key = "your-newsapi-key-here"
-    
-    try:
-        with NewsAPIConnector(api_key) as connector:
-            # Search for articles with default parameters
-            results = connector.search_articles(
-                keyword="Tesla Inc",
-                articles_count=10,
-                articles_sort_by="date",
-                ignore_source_group_uri="paywall/paywalled_sources"
-            )
-            
-            print(f"Found {len(results.get('articles', {}).get('results', []))} articles")
-            
-            # Print article titles and sources
-            for article in results.get('articles', {}).get('results', []):
-                title = article.get('title', 'No title')
-                source = article.get('source', {}).get('title', 'Unknown source')
-                date = article.get('dateTime', 'Unknown date')
-                print(f"- {title} ({source}) - {date}")
-            
-            # Example with custom payload matching the documentation
-            custom_payload = {
-                "action": "getArticles",
-                "keyword": "artificial intelligence",
-                "sourceLocationUri": [
-                    "http://en.wikipedia.org/wiki/United_States",
-                    "http://en.wikipedia.org/wiki/Canada",
-                    "http://en.wikipedia.org/wiki/United_Kingdom"
-                ],
-                "ignoreSourceGroupUri": "paywall/paywalled_sources",
-                "articlesPage": 1,
-                "articlesCount": 5,
-                "articlesSortBy": "date",
-                "articlesSortByAsc": False,
-                "dataType": ["news", "pr"],
-                "forceMaxDataTimeWindow": 31,
-                "resultType": "articles"
-            }
-            
-            custom_results = connector.search_articles_with_custom_payload(custom_payload)
-            print(f"\nCustom search found {len(custom_results.get('articles', {}).get('results', []))} articles")
-                
-    except Exception as e:
-        print(f"Error: {e}")

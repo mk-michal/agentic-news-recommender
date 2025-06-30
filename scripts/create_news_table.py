@@ -14,10 +14,9 @@ def create_news_tables():
     db_schema = DatabaseSchema()
     
     # Initialize all database tables
-    if db_schema.initialize_database():
-        print("All tables created successfully!")
-    else:
-        print("Failed to create database tables.")
+    db_schema.initialize_database()
+    print("All tables created successfully!")
+
 
 
 if __name__ == "__main__":

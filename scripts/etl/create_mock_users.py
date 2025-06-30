@@ -15,6 +15,7 @@ sys.path.append(project_root)
 
 from src.db_utils.db_config import get_db_connection
 
+
 def create_mock_users():
     """Create and insert mock users into the database."""
     
@@ -27,7 +28,7 @@ def create_mock_users():
                           "Health and fitness articles are also interesting to me, particularly nutrition science. "
                           "I prefer concise articles with data visualizations when available.",
             "age": 32,
-            "gender": "male",
+            "gender": "male", 
             "location": "Prague"
         },
         {
@@ -104,6 +105,9 @@ def create_mock_users():
         cursor.execute("SELECT COUNT(*) FROM users")
         total_users = cursor.fetchone()[0]
         print(f"Total users in database: {total_users}")
+        
+        return inserted_count > 0
+
 
 def create_article_history_for_primary_user():
     """
@@ -136,10 +140,8 @@ def create_article_history_for_primary_user():
         existing_history_count = cursor.fetchone()[0]
         if existing_history_count > 0:
             print(f"User {primary_email} already has {existing_history_count} article history records.")
-            print("Do you want to add more records? (y/n)")
-            response = input().strip().lower()
-            if response != 'y':
-                return False
+            # For pipeline usage, don't prompt for input - just continue
+            print("Adding more records to existing history...")
         
         # Get 10 random articles
         cursor.execute("""
@@ -184,7 +186,7 @@ def create_article_history_for_primary_user():
         
         # Display some details about the articles added
         cursor.execute("""
-            SELECT a.id, a.title, a.source_title, a.date 
+            SELECT a.id, a.title, a.source_uri, a.date 
             FROM articles a
             JOIN user_articles ua ON a.id = ua.article_id
             WHERE ua.user_id = %s
@@ -199,11 +201,24 @@ def create_article_history_for_primary_user():
         
         return True
 
-if __name__ == "__main__":
+
+def main() -> bool:
+    """
+    Main function for pipeline usage
+    
+    Returns:
+        True if user creation was successful, False otherwise
+    """
     print("Creating mock users...")
-    create_mock_users()
+    user_result = create_mock_users()
     
     print("\nCreating article history for primary user...")
-    create_article_history_for_primary_user()
+    history_result = create_article_history_for_primary_user()
     
     print("\nDone!")
+    return user_result and history_result
+    
+
+
+if __name__ == "__main__":
+    main()
