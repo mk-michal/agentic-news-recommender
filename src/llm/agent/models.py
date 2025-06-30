@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Tuple
+from typing import Tuple, List, Dict, Any
 
 
 class ClusterAnalysisOutput(BaseModel):
@@ -7,7 +7,32 @@ class ClusterAnalysisOutput(BaseModel):
     cluster_1: str
     cluster_2: str
     cluster_3: str
+
+class ArticleDetails(BaseModel):
+    """Model for detailed article information."""
+    article_id: int
+    title: str
+    url: str
+    source: str
+    body: str
+
+
+class ClusterRecommendations(BaseModel):
+    """Model for recommendations for a single cluster."""
+    cluster_description: str
+    articles: List[ArticleDetails]
+
+
+class RecommendationOutput(BaseModel):
+    """Structured output model for final article recommendations."""
+    cluster_1_recommendations: ClusterRecommendations
+    cluster_2_recommendations: ClusterRecommendations
+    cluster_3_recommendations: ClusterRecommendations
     
-    def to_tuple(self) -> Tuple[str, str, str]:
-        """Convert to tuple format."""
-        return (self.cluster_1, self.cluster_2, self.cluster_3)
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format."""
+        return {
+            "cluster_1_recommendations": self.cluster_1_recommendations.dict(),
+            "cluster_2_recommendations": self.cluster_2_recommendations.dict(),
+            "cluster_3_recommendations": self.cluster_3_recommendations.dict()
+        }

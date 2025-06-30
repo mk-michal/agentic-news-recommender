@@ -1,5 +1,5 @@
 from crewai import Task, Agent
-from src.llm.agent.models import ClusterAnalysisOutput
+from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput
 import sys
 from pathlib import Path
 
@@ -23,30 +23,76 @@ class QueryTaskBuilder:
     
     def create_analysis_task(self, user_email: str, agent: Agent) -> Task:
         """Create a user analysis task with clustering."""
-        description = self._build_task_description(user_email)
+        description = f"""
+        Analyze the reading history and preferences for user with email '{user_email}'.
+
+        DATABASE SCHEMA:
+        {self.schema_info}
+        
+        Your task is to:
+        1. Query the database to find all articles this user has read or interacted with
+        2. Analyze the user's reading patterns, topics of interest, and preferences
+        3. Group the user's interests into 3 distinct clusters based on topics, themes, or content types
+        4. For each cluster, write a detailed paragraph describing the user's interests in that area
+        
+        Use natural language to describe what you want to find, and let the PostgreSQL tool 
+        figure out the appropriate queries. For example:
+        - "Find all articles read by user with email {user_email}"
+        - "Get article titles and content for articles read by this user"
+        - "Show me user profile information and reading statistics"
+        
+        The database contains tables for users, articles, and user_articles (reading history).
+        
+        Output 3 cluster descriptions as structured data.
+        """
         
         return Task(
             description=description,
             agent=agent,
-            expected_output="A structured analysis with 3 cluster descriptions",
+            expected_output="A structured analysis with 3 cluster descriptions based on user reading patterns",
             output_pydantic=ClusterAnalysisOutput
         )
     
-    def _build_task_description(self, user_email: str) -> str:
-        """Build comprehensive task description."""
-        return f"""
-        Analyze reading history for user with email '{user_email}'. Include article titles, 
-        read dates, user info and any patterns in reading behaviour.
-        
+    def create_recommendation_task(self, cluster_analysis: ClusterAnalysisOutput, agent: Agent) -> Task:
+        """Create a comprehensive recommendation task that combines vector search and article retrieval."""
+        description = f"""
+        Based on the following user interest clusters, recommend relevant articles by combining 
+        vector similarity search with database retrieval:
+
+        POSTGRESQL DATABASE SCHEMA:
         {self.schema_info}
+
+        Cluster 1: {cluster_analysis.cluster_1}
+        Cluster 2: {cluster_analysis.cluster_2}  
+        Cluster 3: {cluster_analysis.cluster_3}
+
+        Your task is to:
+        1. Use the vector_similarity_search tool to find 2 most similar articles for each cluster description
+        2. Extract the article IDs from the vector search results
+        3. Use the PostgreSQL tools to retrieve complete article information (title, url, source_title, body) for these article IDs
+        4. Organize the recommendations by cluster with full article details
         
-        Please use the available PostgreSQL tools to:
-        1. Write and execute appropriate SQL queries for the user using the schema above
-        2. Analyze the results and provide insights
-        3. Format the response in a clear, readable manner
-        4. Cluster related user articles into 3 different clusters and output one paragraph for each cluster
-        5. Output the results as structured data with 3 cluster descriptions
+        Process for each cluster:
+        - Search for articles similar to the cluster description using vector search
+        - Get the article IDs from the search results
+        - Query the articles table to get complete information for these IDs
+        - Structure the final output with cluster descriptions and article details
         
-        Note: The user_articles table tracks which articles users have read/interacted with, 
-        articles table contains article details, and users table contains user profiles.
+        Use natural language queries for PostgreSQL like:
+        - "Get article details for article IDs: [list of IDs]"
+        - "Find title, url, source_title, and body for articles with these IDs"
+        
+        Expected output format:
+        - cluster_1_recommendations: cluster description + 2 articles with full details
+        - cluster_2_recommendations: cluster description + 2 articles with full details  
+        - cluster_3_recommendations: cluster description + 2 articles with full details
+        
+        Each article should include: article_id, title, url, source, body
         """
+        
+        return Task(
+            description=description,
+            agent=agent,
+            expected_output="Complete article recommendations organized by cluster with full metadata",
+            output_pydantic=RecommendationOutput
+        )
