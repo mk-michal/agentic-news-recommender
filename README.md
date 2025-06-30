@@ -143,13 +143,25 @@ The system uses CrewAI with three specialized agents:
 ## Project Structure
 
 ```
-src/llm/agent/
-├── agents.py          # Agent definitions and roles
-├── tasks.py           # Task specifications and workflows  
-├── tools.py           # Tool factories and configurations
-├── models.py          # Pydantic models for outputs
-├── mcp_config.py      # MCP server configuration
-└── vector_tools.py    # Vector database tools
+### File Structure Overview
+
+```
+.
+├── README.md
+├── pyproject.toml           # Project dependencies and configuration
+├── data/
+│   ├── reports/            # Generated recommendation reports
+│   └── vector_store/       # FAISS vector database files
+├── scripts/
+│   ├── create_news_table.py     # Database initialization
+│   ├── pipeline_runner.py       # Complete data pipeline
+│   └── run_crew.py              # Agent execution
+├── src/
+    ├── db_utils/               # Database utilities
+    ├── etl/                    # Data extraction and processing
+    └── llm/                    # AI agent system
+       └── agent/              # CrewAI agent implementation
+
 ```
 
 ## Output
