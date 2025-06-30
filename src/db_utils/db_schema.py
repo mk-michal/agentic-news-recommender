@@ -37,7 +37,7 @@ class DatabaseSchema:
             title TEXT,
             body TEXT,
             sentiment DECIMAL(10, 8),
-            source_title VARCHAR(255),
+            source_uri VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         

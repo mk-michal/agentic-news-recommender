@@ -41,7 +41,7 @@ class RecommenderTools:
     
     def __init__(self, mcp_config: MCPServerConfig = None, target_date: date = None):
         self.mcp_config = mcp_config or MCPServerConfig()
-        self.target_date = target_date or date(2025, 6, 28)
+        self.target_date = target_date or date(2025, 6, 20)
         self.vector_tool = VectorDatabaseTool(self.target_date)
     
     def get_tools(self) -> List[Any]:

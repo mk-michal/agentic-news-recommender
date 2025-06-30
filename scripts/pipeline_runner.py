@@ -47,38 +47,38 @@ def main():
     print("STARTING NEWS PROCESSING PIPELINE")
     print("=" * 60)
     
-    # # Step 1: Extract news articles
-    # print("\n🔄 Step 1: Extracting news articles from NewsAPI...")
-    # response_ids = extract_news(
-    #     keywords=args.keywords,
-    #     count=args.count,
-    #     dates=f"{args.start_date},{args.end_date}"
-    # )
+    # Step 1: Extract news articles
+    print("\n🔄 Step 1: Extracting news articles from NewsAPI...")
+    response_ids = extract_news(
+        keywords=args.keywords,
+        count=args.count,
+        dates=f"{args.start_date},{args.end_date}"
+    )
     
-    # if not response_ids:
-    #     print("❌ No articles extracted. Pipeline terminated.")
-    #     return
+    if not response_ids:
+        print("❌ No articles extracted. Pipeline terminated.")
+        return
     
-    # print(f"✅ Step 1 complete. Extracted {len(response_ids)} response batches.")
+    print(f"✅ Step 1 complete. Extracted {len(response_ids)} response batches.")
     
-    # # Step 2: Process responses to articles
-    # print("\n🔄 Step 2: Processing responses to individual articles...")
-    # processed_count = 0
-    # for response_id in response_ids:
-    #     result = process_responses(response_id=response_id)
-    #     if result:
-    #         processed_count += 1
+    # Step 2: Process responses to articles
+    print("\n🔄 Step 2: Processing responses to individual articles...")
+    processed_count = 0
+    for response_id in response_ids:
+        result = process_responses(response_id=response_id)
+        if result:
+            processed_count += 1
     
-    # print(f"✅ Step 2 complete. Processed {processed_count} response batches.")
+    print(f"✅ Step 2 complete. Processed {processed_count} response batches.")
     
-    # # Step 3: Create vector database
-    # print("\n🔄 Step 3: Creating vector database...")
-    # vector_result = create_vector_db(date_str=args.start_date)
+    # Step 3: Create vector database
+    print("\n🔄 Step 3: Creating vector database...")
+    vector_result = create_vector_db(date_str=args.start_date)
     
-    # if vector_result:
-    #     print("✅ Step 3 complete. Vector database created.")
-    # else:
-    #     print("⚠️  Step 3 completed with warnings. Check vector database.")
+    if vector_result:
+        print("✅ Step 3 complete. Vector database created.")
+    else:
+        print("⚠️  Step 3 completed with warnings. Check vector database.")
     
     # Step 4: Create mock users
     print("\n🔄 Step 4: Creating mock users and reading history...")

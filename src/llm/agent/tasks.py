@@ -67,7 +67,7 @@ class QueryTaskBuilder:
         1. Extract the 3 cluster descriptions from the previous task's output
         2. Use the vector_similarity_search tool to find 2 most similar articles for each cluster description
         3. Extract the article IDs from the vector search results
-        4. Use the PostgreSQL tools to retrieve complete article information (title, url, source_title, body) for these article IDs
+        4. Use the PostgreSQL tools to retrieve complete article information (title, url, source_uri, body) for these article IDs
         5. Organize the recommendations by cluster with full article details
         
         Process for each cluster:
@@ -78,7 +78,7 @@ class QueryTaskBuilder:
         
         Use natural language queries for PostgreSQL like:
         - "Get article details for article IDs: [list of IDs]"
-        - "Find title, url, source_title, and body for articles with these IDs"
+        - "Find title, url, source_uri, and body for articles with these IDs"
         
         Expected output format:
         - cluster_1_recommendations: cluster description + 2 articles with full details

@@ -7,6 +7,8 @@ This script orchestrates the execution of database analysis using CrewAI agents.
 
 import json
 import sys
+import argparse
+from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Any, Dict
 
@@ -25,10 +27,10 @@ from src.llm.agent.mcp_config import MCPServerConfig
 class DatabaseAnalysisExecutor:
     """Main class for executing database analysis through CrewAI agents."""
     
-    def __init__(self):
+    def __init__(self, target_date: str):
         self.mcp_config = MCPServerConfig()
         self.db_tools = DatabaseTools(self.mcp_config)
-        self.recommender_tools = RecommenderTools(self.mcp_config)
+        self.recommender_tools = RecommenderTools(self.mcp_config, target_date)
         self.task_builder = QueryTaskBuilder()
     
     def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
@@ -97,9 +99,22 @@ class DatabaseAnalysisExecutor:
 
 def main():
     """Main execution function."""
-    user_email = "michalkucirka@gmail.com"
+    parser = argparse.ArgumentParser(description='Run database analysis and generate personalized recommendations')
+    parser.add_argument('--user-email', 
+                       type=str, 
+                       default='petr.pavel@gmail.com',
+                       help='Email address of the user for personalized recommendations (default: petr.pavel@gmail.com)')
+    parser.add_argument('--target-date',
+                    type=str,
+                    default='2025-06-20',
+                    help='Target date for vector database in YYYY-MM-DD format (default: 2025-06-20)')
     
-    executor = DatabaseAnalysisExecutor()
+    args = parser.parse_args()
+    user_email = args.user_email
+
+    args.target_date = datetime.strptime(args.target_date, "%Y-%m-%d").date()
+    
+    executor = DatabaseAnalysisExecutor(target_date=args.target_date)
     
     # Execute full pipeline
     full_result = executor.execute_full_analysis(user_email)

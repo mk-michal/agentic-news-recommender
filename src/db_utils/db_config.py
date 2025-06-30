@@ -13,7 +13,7 @@ class DatabaseConfig:
         self.host = os.getenv('DB_HOST', 'localhost')
         self.port = os.getenv('DB_PORT', '5432')
         self.database = os.getenv('DB_NAME', 'postgres')
-        self.user = os.getenv('DB_USER', 'michal')
+        self.user = os.getenv('DB_USER', 'user')
         self.password = os.getenv('DB_PASSWORD', 'password')
     
     def get_connection_params(self) -> Dict[str, str]:

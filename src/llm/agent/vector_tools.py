@@ -21,7 +21,7 @@ class VectorDatabaseTool(BaseTool):
     
     def __init__(self, target_date: date = None):
         super().__init__()
-        self.target_date = target_date or date(2025, 6, 28)  # Default to available date
+        self.target_date = target_date or date(2025, 6, 20)  # Default to available date
         self.vector_store = VectorStore(self.target_date)
     
     def _run(self, query: str) -> str:

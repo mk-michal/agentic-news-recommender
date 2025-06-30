@@ -50,7 +50,7 @@ The system uses [NewsAPI.ai](https://newsapi.ai/documentation?tab=introduction) 
 Execute the full data processing pipeline:
 
 ```bash
-python scripts/pipeline_runner.py
+NEWSAPI_KEY=<news-api-key> OPENAI_API_KEY='<openai-api-key>' PYTHONPATH=src python3 scripts/pipeline_runner.py
 ```
 
 This orchestrates the following steps:
@@ -103,7 +103,7 @@ npx @modelcontextprotocol/server-postgres postgresql://username:password@localho
 Execute the AI agent system:
 
 ```bash
-python scripts/run_crew.py
+SERPER_API_KEY=<serper-api-key> OPENAI_API_KEY=<openai-api-key> PYTHONPATH=src python3 scripts/run_crew.py
 ```
 
 ## Agent Architecture
