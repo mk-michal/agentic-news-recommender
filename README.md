@@ -161,9 +161,20 @@ The system generates personalized news recommendation reports in the `reports/` 
 - Related article discovery and context
 - Engaging, personalized content presentation
 
-## Configuration
+## Features
 
-Database and API configurations are managed through:
-- [`src/db_utils/db_config.py`](src/db_utils/db_config.py) - Database connection settings
-- [`src/llm/agent/mcp_config.py`](src/llm/agent/mcp_config.py) - MCP server configuration
-- Environment variables for
+- **Multi-source News Aggregation**: Fetches articles from various news sources via NewsAPI.ai
+- **Semantic Search**: Uses OpenAI embeddings and FAISS for similarity-based recommendations
+- **Personalized Recommendations**: Analyzes user reading history to suggest relevant articles
+- **Timeline Generation**: Creates chronological context for recommended articles
+- **Automated Reporting**: Generates comprehensive markdown reports with personalized insights
+- **MCP Integration**: Uses Model Context Protocol for secure database access
+
+## Technical Stack
+
+- **Backend**: Python 3.12+, PostgreSQL, FAISS
+- **AI Framework**: CrewAI, OpenAI GPT models
+- **Data Processing**: Custom ETL pipeline with vector embeddings
+- **Database**: PostgreSQL for structured data, FAISS for vector similarity
+- **APIs**: NewsAPI.ai, Serper.dev, OpenAI
+
