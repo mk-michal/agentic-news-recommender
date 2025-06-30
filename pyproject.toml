@@ -13,5 +13,6 @@ dependencies = [
     "crewai-tools",
     "faiss-cpu",
     "pydantic",
-    "mcp"
+    "mcp",
+    crewai-tools[mcp]
 ]
