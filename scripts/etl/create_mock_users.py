@@ -22,14 +22,14 @@ def create_mock_users():
     # List of mock users with realistic data
     mock_users = [
         {
-            "email": "michalkucirka@gmail.com",
+            "email": "petr.pavel@gmail.com",
             "preferences": "I'm interested in technology news, especially AI and machine learning advancements. "
                           "I enjoy reading about financial markets and investment strategies. "
                           "Health and fitness articles are also interesting to me, particularly nutrition science. "
                           "I prefer concise articles with data visualizations when available.",
-            "age": 32,
+            "age": 55,
             "gender": "male", 
-            "location": "Prague"
+            "location": "Berlin"
         },
         {
             "email": "jan.novak@example.com",
@@ -111,10 +111,10 @@ def create_mock_users():
 
 def create_article_history_for_primary_user():
     """
-    Create mock article reading history for the user with email michalkucirka@gmail.com.
+    Create mock article reading history for the user with email petr.pavel@gmail.com.
     Selects 10 random articles from the articles table and creates records in user_articles table.
     """
-    primary_email = "michalkucirka@gmail.com"
+    primary_email = "petr.pavel@gmail.com"
     
     with get_db_connection() as conn:
         cursor = conn.cursor()

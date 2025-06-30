@@ -1,4 +1,4 @@
-# Personalized News Recommendations for michalkucirka@gmail.com
+# Personalized News Recommendations for petr.pavel@gmail.com
 
 ## Introduction
 Hello Michal! Based on your interests in technology, finance, and health, I've curated a selection of articles tailored to keep you informed on the latest trends and insights in these areas. Each article has been carefully chosen to provide valuable information that aligns with your preferences, along with a timeline of related stories. Let's dive into these recommendations!
