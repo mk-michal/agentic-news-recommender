@@ -13,6 +13,7 @@ class VectorDatabaseTool(BaseTool):
     Search for similar articles in the vector database using semantic similarity.
     Input should be a search query (string) and it will return article IDs with similarity scores.
     Use this tool to find articles that are semantically similar to a given topic or cluster description.
+    This tool automatically filters to only show articles published BEFORE the target date.
     Returns a list of article IDs with their similarity scores.
     """
     # Declare as Pydantic fields
@@ -26,19 +27,23 @@ class VectorDatabaseTool(BaseTool):
     
     def _run(self, query: str) -> str:
         """Execute vector similarity search and return article IDs with scores."""
-            # Search for similar articles
-        similar_articles = self.vector_store.search(query, k=2)
+        from datetime import date as date_type
+        
+        # Set date range to filter articles before target_date
+        start_date = date_type(2000, 1, 1)  # Very early date
+        date_range = (start_date, self.target_date)
+        
+        # Search for similar articles with date filtering
+        similar_articles = self.vector_store.search_similar(
+            query=query, 
+            k=2,
+            date_range=date_range
+        )
         
         if not similar_articles:
-            return f"No similar articles found for query: {query}"
+            return f"No similar articles found for query: {query} before {self.target_date}"
         
-        # Format results as simple ID and score pairs
-        results = []
-        for article_id, similarity_score in similar_articles:
-            results.append({
-                "article_id": article_id,
-                "similarity_score": float(similarity_score)
-            })
+        # Format results as simple ID list for the agent
+        article_ids = [article['id'] for article in similar_articles]
         
-        return [el['article_id'] for el in results]
-        
+        return str(article_ids)

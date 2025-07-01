@@ -33,22 +33,32 @@ def main(date_str: str = None) -> bool:
         parser = argparse.ArgumentParser(description='Create vector database for articles')
         parser.add_argument('--date', type=str, required=True,
                            help='Date in YYYY-MM-DD format')
+        parser.add_argument('--full-rebuild', action='store_true',
+                           help='Force full rebuild instead of incremental update')
         args = parser.parse_args()
         date_str = args.date
+        full_rebuild = args.full_rebuild
+    else:
+        full_rebuild = False
     
-        # Parse the date
+    # Parse the date
     target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     
     print(f"Creating vector database for date: {target_date}")
     
     # Create vector store
-    vector_store = VectorStore(target_date)
+    vector_store = VectorStore(use_existing_version=True)
     
     # Build the vector database
-    result = vector_store.create_index()
+    if full_rebuild:
+        print("Performing full rebuild...")
+        vector_store.create_index(incremental=False)
+    else:
+        print(f"Performing incremental update for {target_date}...")
+        vector_store.create_index(incremental=True, target_date=target_date)
     
     print(f"✓ Successfully created vector database for {target_date}")
-
+    return True
 
 
 if __name__ == "__main__":

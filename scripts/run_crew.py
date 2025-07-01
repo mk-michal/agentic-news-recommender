@@ -37,7 +37,7 @@ class DatabaseAnalysisExecutor:
         """Execute the complete analysis pipeline with three agents."""
         
         # Get tools for both agents
-        pg_tools = self.db_tools.get_tools_with_context().tools
+        pg_tools = self.db_tools.get_tools().tools
         rec_pg_tools, vector_tool = self.recommender_tools.get_tools_with_context()
         recommender_tools = rec_pg_tools.tools + [vector_tool] 
         
@@ -76,7 +76,7 @@ class DatabaseAnalysisExecutor:
             memory=True
         )
         result = crew.kickoff()
-        result = PersonalizedReportOutput.parse_obj(json.loads(result.raw))
+        result = tasks[-1].output.pydantic.markdown_report
         
         # Save the markdown report to file if it's a PersonalizedReportOutput
         if hasattr(result, 'markdown_report'):
@@ -106,7 +106,7 @@ def main():
                        help='Email address of the user for personalized recommendations (default: petr.pavel@gmail.com)')
     parser.add_argument('--target-date',
                     type=str,
-                    default='2025-06-20',
+                    default='2025-06-21',
                     help='Target date for vector database in YYYY-MM-DD format (default: 2025-06-20)')
     
     args = parser.parse_args()

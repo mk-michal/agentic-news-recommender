@@ -60,18 +60,23 @@ class QueryTaskBuilder:
         Based on the cluster analysis results from the previous task, recommend relevant articles by combining 
         vector similarity search with database retrieval.
 
+        IMPORTANT: Only recommend articles published BEFORE the target date. The vector search tool 
+        automatically filters articles by date, ensuring recommendations are from prior periods only.
+
         POSTGRESQL DATABASE SCHEMA:
         {self.schema_info}
 
         Your task is to:
         1. Extract the 3 cluster descriptions from the previous task's output
         2. Use the vector_similarity_search tool to find 2 most similar articles for each cluster description
+           (This tool automatically filters to articles published before the target date)
         3. Extract the article IDs from the vector search results
         4. Use the PostgreSQL tools to retrieve complete article information (title, url, source_uri, body) for these article IDs
         5. Organize the recommendations by cluster with full article details
         
         Process for each cluster:
         - Search for articles similar to the cluster description using vector search
+        - The vector search will only return articles published before the target date
         - Get the article IDs from the search results
         - Query the articles table to get complete information for these IDs
         - Structure the final output with cluster descriptions and article details
@@ -91,7 +96,7 @@ class QueryTaskBuilder:
         return Task(
             description=description,
             agent=agent,
-            expected_output="Complete article recommendations organized by cluster with full metadata",
+            expected_output="Complete article recommendations organized by cluster with full metadata, filtered to articles published before the target date",
             output_pydantic=RecommendationOutput
         )
     
