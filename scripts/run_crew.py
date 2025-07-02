@@ -11,6 +11,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Any, Dict
+import os
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent
@@ -20,30 +21,41 @@ from crewai import Crew
 from src.llm.agent.agents import DatabaseAgent, RecommenderAgent, ReportWriterAgent
 from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput, PersonalizedReportOutput
 from src.llm.agent.tasks import QueryTaskBuilder
-from src.llm.agent.tools import DatabaseTools, RecommenderTools
+from src.llm.agent.tools import RecommenderTools, DatabaseTool
 from src.llm.agent.mcp_config import MCPServerConfig
+from src.llm.agent.tools import DatabaseTool
+from src.llm.agent.vector_tools import VectorDatabaseTool
 
 
-class DatabaseAnalysisExecutor:
+class AgentExecutor:
     """Main class for executing database analysis through CrewAI agents."""
     
-    def __init__(self, target_date: str):
-        self.mcp_config = MCPServerConfig()
-        self.db_tools = DatabaseTools(self.mcp_config)
-        self.recommender_tools = RecommenderTools(self.mcp_config, target_date)
+    def __init__(self, target_date: str):        
+        # Initialize database and vector tools
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable is required")
+            
+        self.database_tool = DatabaseTool(database_url)
+        self.vector_tool = VectorDatabaseTool(target_date=target_date)
+
+        # Initialize task builder
         self.task_builder = QueryTaskBuilder()
-    
-    def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
-        """Execute the complete analysis pipeline with three agents."""
-        
-        # Get tools for both agents
-        pg_tools = self.db_tools.get_tools().tools
-        rec_pg_tools, vector_tool = self.recommender_tools.get_tools_with_context()
-        recommender_tools = rec_pg_tools.tools + [vector_tool] 
         
         # Create agents
-        db_agent = DatabaseAgent.create_agent(list(pg_tools))
-        recommender_agent = RecommenderAgent.create_agent(recommender_tools)
+        self.database_agent = DatabaseAgent.create_agent([self.database_tool])
+        self.recommender_agent = RecommenderAgent.create_agent(
+            self.database_tool, 
+            self.vector_tool
+        )
+        self.report_writer_agent = ReportWriterAgent.create_agent()
+
+    def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
+        """Execute the complete analysis pipeline with three agents."""
+
+        # Create agents
+        db_agent = DatabaseAgent.create_agent([self.database_tool])
+        recommender_agent = RecommenderAgent.create_agent(self.vector_tool, self.database_tool)
         report_agent = ReportWriterAgent.create_agent()
         
         # Create tasks
@@ -114,7 +126,7 @@ def main():
 
     args.target_date = datetime.strptime(args.target_date, "%Y-%m-%d").date()
     
-    executor = DatabaseAnalysisExecutor(target_date=args.target_date)
+    executor = AgentExecutor(target_date=args.target_date)
     
     # Execute full pipeline
     full_result = executor.execute_full_analysis(user_email)
