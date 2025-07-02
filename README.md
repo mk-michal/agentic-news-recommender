@@ -143,25 +143,32 @@ The system uses CrewAI with three specialized agents:
 ## Project Structure
 
 ```
-### File Structure Overview
-
-```
-.
+rohlik_agent/
 ├── README.md
-├── pyproject.toml           # Project dependencies and configuration
+├── pyproject.toml                   # Project dependencies and configuration
 ├── data/
-│   ├── reports/            # Generated recommendation reports
-│   └── vector_store/       # FAISS vector database files
-├── scripts/
-│   ├── create_news_table.py     # Database initialization
-│   ├── pipeline_runner.py       # Complete data pipeline
-│   └── run_crew.py              # Agent execution
-├── src/
-    ├── db_utils/               # Database utilities
-    ├── etl/                    # Data extraction and processing
-    └── llm/                    # AI agent system
-       └── agent/              # CrewAI agent implementation
-
+│   ├── reports/                     # Generated recommendation reports
+│   └── vector_store/                # FAISS vector database files
+├── scripts/                         # Executable scripts
+│   ├── create_news_table.py         # Database initialization
+│   ├── newsapi_extractor.py         # News API data extraction
+│   ├── process_response_to_articles.py  # Process API responses
+│   ├── create_vector_db.py          # Generate vector embeddings
+│   ├── create_mock_users.py         # Create test users and history
+│   ├── pipeline_runner.py           # Complete data pipeline orchestrator
+│   └── run_crew.py                  # Agent execution
+└── src/                             # Source code
+    ├── db_utils/                    # Database utilities and connections
+    ├── etl/                         # Extract, Transform, Load modules
+    │   ├── newsapi_client.py        # NewsAPI integration
+    │   ├── article_processor.py     # Article data processing
+    │   └── vector_store.py          # Vector database operations
+    └── llm/                         # AI agent system
+        └── agent/                   # CrewAI agent implementation
+            ├── agents.py            # Agent definitions
+            ├── tasks.py             # Task specifications
+            ├── tools.py             # Custom tools
+            └── crew.py              # Crew orchestration
 ```
 
 ## Output

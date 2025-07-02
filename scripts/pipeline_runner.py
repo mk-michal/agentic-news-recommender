@@ -73,21 +73,15 @@ def main():
     
     # Step 3: Create vector database
     print("\n🔄 Step 3: Creating vector database...")
-    vector_result = create_vector_db(date_str=args.start_date)
+    create_vector_db(date_str=args.start_date)
     
-    if vector_result:
-        print("✅ Step 3 complete. Vector database created.")
-    else:
-        print("⚠️  Step 3 completed with warnings. Check vector database.")
+    print("✅ Step 3 complete. Vector database created.")
     
     # Step 4: Create mock users
     print("\n🔄 Step 4: Creating mock users and reading history...")
-    user_result = create_users()
+    create_users()
     
-    if user_result:
-        print("✅ Step 4 complete. Mock users and reading history created.")
-    else:
-        print("⚠️  Step 4 completed with warnings. Check user creation.")
+    print("✅ Step 4 complete. Mock users and reading history created.")
     
     print("\n" + "=" * 60)
     print("🎉 PIPELINE COMPLETED SUCCESSFULLY!")

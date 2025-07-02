@@ -8,9 +8,10 @@ This script orchestrates the execution of database analysis using CrewAI agents.
 import json
 import sys
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple, Any, Dict
+import os
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent
@@ -18,32 +19,39 @@ sys.path.append(str(project_root))
 
 from crewai import Crew
 from src.llm.agent.agents import DatabaseAgent, RecommenderAgent, ReportWriterAgent
-from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput, PersonalizedReportOutput
 from src.llm.agent.tasks import QueryTaskBuilder
-from src.llm.agent.tools import DatabaseTools, RecommenderTools
-from src.llm.agent.mcp_config import MCPServerConfig
+from src.llm.agent.tools import DatabaseTool, VectorDatabaseTool
 
 
-class DatabaseAnalysisExecutor:
+class AgentExecutor:
     """Main class for executing database analysis through CrewAI agents."""
     
-    def __init__(self, target_date: str):
-        self.mcp_config = MCPServerConfig()
-        self.db_tools = DatabaseTools(self.mcp_config)
-        self.recommender_tools = RecommenderTools(self.mcp_config, target_date)
+    def __init__(self, target_date: str):        
+        # Initialize database and vector tools
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable is required")
+            
+        self.database_tool = DatabaseTool(database_url)
+        self.vector_tool = VectorDatabaseTool(target_date=target_date)
+
+        # Initialize task builder
         self.task_builder = QueryTaskBuilder()
-    
-    def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
-        """Execute the complete analysis pipeline with three agents."""
-        
-        # Get tools for both agents
-        pg_tools = self.db_tools.get_tools_with_context().tools
-        rec_pg_tools, vector_tool = self.recommender_tools.get_tools_with_context()
-        recommender_tools = rec_pg_tools.tools + [vector_tool] 
         
         # Create agents
-        db_agent = DatabaseAgent.create_agent(list(pg_tools))
-        recommender_agent = RecommenderAgent.create_agent(recommender_tools)
+        self.database_agent = DatabaseAgent.create_agent([self.database_tool])
+        self.recommender_agent = RecommenderAgent.create_agent(
+            self.database_tool, 
+            self.vector_tool
+        )
+        self.report_writer_agent = ReportWriterAgent.create_agent()
+
+    def execute_full_analysis(self, user_email: str) -> Dict[str, Any]:
+        """Execute the complete analysis pipeline with three agents."""
+
+        # Create agents
+        db_agent = DatabaseAgent.create_agent([self.database_tool])
+        recommender_agent = RecommenderAgent.create_agent(self.vector_tool, self.database_tool)
         report_agent = ReportWriterAgent.create_agent()
         
         # Create tasks
@@ -76,23 +84,22 @@ class DatabaseAnalysisExecutor:
             memory=True
         )
         result = crew.kickoff()
-        result = PersonalizedReportOutput.parse_obj(json.loads(result.raw))
+        result = tasks[-1].output.pydantic
         
         # Save the markdown report to file if it's a PersonalizedReportOutput
-        if hasattr(result, 'markdown_report'):
             # Create reports directory if it doesn't exist
-            from pathlib import Path
-            reports_dir = Path(__file__).parent.parent / "reports"
-            reports_dir.mkdir(exist_ok=True)
-            
-            # Generate filename with timestamp
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"news_recommendations_{user_email.replace('@', '_at_')}_{timestamp}.md"
-            file_path = reports_dir / filename
-            
-            result.save_to_file(str(file_path))
-            print(f"Report saved to: {file_path}")
+        from pathlib import Path
+        reports_dir = Path(__file__).parent.parent / "reports"
+        reports_dir.mkdir(exist_ok=True)
+        
+        # Generate filename with timestamp
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"news_recommendations_{user_email.replace('@', '_at_')}_{timestamp}.md"
+        file_path = reports_dir / filename
+        
+        result.save_to_file(str(file_path))
+        print(f"Report saved to: {file_path}")
         
         return result
 
@@ -106,7 +113,7 @@ def main():
                        help='Email address of the user for personalized recommendations (default: petr.pavel@gmail.com)')
     parser.add_argument('--target-date',
                     type=str,
-                    default='2025-06-20',
+                    default='2025-06-21',
                     help='Target date for vector database in YYYY-MM-DD format (default: 2025-06-20)')
     
     args = parser.parse_args()
@@ -114,7 +121,7 @@ def main():
 
     args.target_date = datetime.strptime(args.target_date, "%Y-%m-%d").date()
     
-    executor = DatabaseAnalysisExecutor(target_date=args.target_date)
+    executor = AgentExecutor(target_date=args.target_date)
     
     # Execute full pipeline
     full_result = executor.execute_full_analysis(user_email)
