@@ -37,9 +37,7 @@ def main(date_str: str = None) -> bool:
                            help='Force full rebuild instead of incremental update')
         args = parser.parse_args()
         date_str = args.date
-        full_rebuild = args.full_rebuild
-    else:
-        full_rebuild = False
+
     
     # Parse the date
     target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -50,12 +48,7 @@ def main(date_str: str = None) -> bool:
     vector_store = VectorStore(use_existing_version=True)
     
     # Build the vector database
-    if full_rebuild:
-        print("Performing full rebuild...")
-        vector_store.create_index(incremental=False)
-    else:
-        print(f"Performing incremental update for {target_date}...")
-        vector_store.create_index(incremental=True, target_date=target_date)
+    vector_store.create_index(incremental=False)
     
     print(f"✓ Successfully created vector database for {target_date}")
     return True
