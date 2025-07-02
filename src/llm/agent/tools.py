@@ -78,7 +78,7 @@ class VectorDatabaseTool(BaseTool):
     
     def __init__(self, target_date: date = None):
         super().__init__()
-        self.target_date = target_date or date(2025, 6, 20)  # Default to available date
+        self.target_date = target_date  # Default to available date
         self.vector_store = VectorStore(self.target_date)
     
     def _run(self, query: str) -> str:
@@ -86,8 +86,7 @@ class VectorDatabaseTool(BaseTool):
         from datetime import date as date_type
         
         # Set date range to filter articles before target_date
-        start_date = date_type(2000, 1, 1)  # Very early date
-        date_range = (start_date, self.target_date)
+        date_range = (self.target_date, self.target_date)
         
         # Search for similar articles with date filtering
         similar_articles = self.vector_store.search_similar(
@@ -103,31 +102,3 @@ class VectorDatabaseTool(BaseTool):
         article_ids = [article['id'] for article in similar_articles]
         
         return str(article_ids)
-    
-
-class RecommenderTools:
-    """Factory class for creating recommendation tools (PostgreSQL + Vector DB)."""
-    
-    def __init__(self, database_url: str, vector_db_path: str):
-        """Initialize tools with database and vector database connections."""
-        self.database_url = database_url
-        self.vector_db_path = vector_db_path
-        
-        # Initialize tools
-        self.database_tool = DatabaseTool(database_url)
-        self.vector_tool = VectorTool(vector_db_path)
-    
-    def get_tools(self) -> List[Any]:
-        """Get all available tools."""
-        try:
-            tools = [self.database_tool, self.vector_tool]
-            logger.info(f"Successfully initialized {len(tools)} tools")
-            return tools
-        except Exception as e:
-            logger.error(f"Error initializing tools: {e}")
-            raise
-    
-    def _print_available_tools(self, tools) -> None:
-        """Print available tools for debugging."""
-        tool_names = [tool.name for tool in tools]
-        print(f"Available tools: {tool_names}")

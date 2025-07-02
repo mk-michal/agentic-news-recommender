@@ -8,7 +8,7 @@ This script orchestrates the execution of database analysis using CrewAI agents.
 import json
 import sys
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple, Any, Dict
 import os
@@ -19,12 +19,8 @@ sys.path.append(str(project_root))
 
 from crewai import Crew
 from src.llm.agent.agents import DatabaseAgent, RecommenderAgent, ReportWriterAgent
-from src.llm.agent.models import ClusterAnalysisOutput, RecommendationOutput, PersonalizedReportOutput
 from src.llm.agent.tasks import QueryTaskBuilder
-from src.llm.agent.tools import RecommenderTools, DatabaseTool
-from src.llm.agent.mcp_config import MCPServerConfig
-from src.llm.agent.tools import DatabaseTool
-from src.llm.agent.vector_tools import VectorDatabaseTool
+from src.llm.agent.tools import DatabaseTool, VectorDatabaseTool
 
 
 class AgentExecutor:
@@ -88,23 +84,22 @@ class AgentExecutor:
             memory=True
         )
         result = crew.kickoff()
-        result = tasks[-1].output.pydantic.markdown_report
+        result = tasks[-1].output.pydantic
         
         # Save the markdown report to file if it's a PersonalizedReportOutput
-        if hasattr(result, 'markdown_report'):
             # Create reports directory if it doesn't exist
-            from pathlib import Path
-            reports_dir = Path(__file__).parent.parent / "reports"
-            reports_dir.mkdir(exist_ok=True)
-            
-            # Generate filename with timestamp
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"news_recommendations_{user_email.replace('@', '_at_')}_{timestamp}.md"
-            file_path = reports_dir / filename
-            
-            result.save_to_file(str(file_path))
-            print(f"Report saved to: {file_path}")
+        from pathlib import Path
+        reports_dir = Path(__file__).parent.parent / "reports"
+        reports_dir.mkdir(exist_ok=True)
+        
+        # Generate filename with timestamp
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"news_recommendations_{user_email.replace('@', '_at_')}_{timestamp}.md"
+        file_path = reports_dir / filename
+        
+        result.save_to_file(str(file_path))
+        print(f"Report saved to: {file_path}")
         
         return result
 
